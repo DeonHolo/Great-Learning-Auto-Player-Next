@@ -1,0 +1,80 @@
+// ==UserScript==
+// @name         Great Learning Auto-Player & Next
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  Auto play, mute, and auto-advance Great Learning course videos in the background
+// @author       You
+// @match        https://olympus.mygreatlearning.com/*
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=mygreatlearning.com
+// @grant        none
+// @license      MIT
+// @run-at       document-end
+// ==/UserScript==
+ 
+(function() {
+    'use strict';
+ 
+    // CONFIGURATION
+    const PLAYBACK_SPEED = 2.0; // Set video speed: 1.5, 2.0, etc.
+    const AUTO_MUTE = true;     // Keep muted so it runs silently in the background
+ 
+    // 1. Prevent Great Learning from pausing when you switch tabs
+    try {
+        Object.defineProperty(document, 'hidden', { get: () => false, configurable: true });
+        Object.defineProperty(document, 'visibilityState', { get: () => 'visible', configurable: true });
+        window.addEventListener('visibilitychange', (e) => e.stopImmediatePropagation(), true);
+    } catch (e) {}
+ 
+    let isAdvancing = false;
+ 
+    // 2. Loop to keep playing and detect video completion
+    setInterval(() => {
+        if (isAdvancing) return;
+ 
+        const video = document.querySelector('video');
+        if (!video) return;
+ 
+        // Apply speed & mute
+        video.playbackRate = PLAYBACK_SPEED;
+        if (AUTO_MUTE) video.muted = true;
+ 
+        // Keep playing if paused
+        if (video.paused && !video.ended) {
+            video.play().catch(() => {});
+        }
+ 
+        // Check if video reached the end
+        const isDone = video.ended || (video.duration && video.currentTime >= video.duration - 1.5);
+ 
+        if (isDone) {
+            isAdvancing = true;
+            console.log("[Auto-Player] Video ended. Moving to next lesson...");
+ 
+            setTimeout(() => {
+                // Try 1: Click "Next" button if present
+                const nextBtn = Array.from(document.querySelectorAll('button, a')).find(el => {
+                    const text = (el.innerText || '').trim().toLowerCase();
+                    return text === 'next' || text === 'next >' || text === 'next lesson';
+                });
+ 
+                if (nextBtn) {
+                    nextBtn.click();
+                    return;
+                }
+ 
+                // Try 2: Click the next item in the sidebar playlist
+                const active = document.querySelector('[class*="active"], [class*="selected"], [style*="border-color"]');
+                if (active) {
+                    const next = active.nextElementSibling || active.parentElement?.nextElementSibling;
+                    if (next) {
+                        (next.querySelector('a, button, div') || next).click();
+                        return;
+                    }
+                }
+ 
+                // Reset lock after 4s if navigation didn't trigger
+                setTimeout(() => { isAdvancing = false; }, 4000);
+            }, 1000);
+        }
+    }, 2000);
+})();

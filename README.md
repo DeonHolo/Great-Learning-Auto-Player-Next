@@ -16,5 +16,5 @@ Edit the constants at the top of the script if needed:
 - `AUTO_MUTE`: Set to `false` if you want sound enabled (default: `true`).
 
 ### Usage
-Go to https://greasyfork.org/en/scripts/596892-great-learning-auto-player-next
-Install with Tampermonkey or Violentmonkey, then open any course video on `olympus.mygreatlearning.com`.
+- Go to https://greasyfork.org/en/scripts/596892-great-learning-auto-player-next
+- Install with Tampermonkey or Violentmonkey, then open any course video on `olympus.mygreatlearning.com`.
